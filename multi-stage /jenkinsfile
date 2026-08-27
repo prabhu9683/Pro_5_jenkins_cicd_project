@@ -1,1 +1,62 @@
+pipeline {
+    agent any // Instructs Jenkins to execute this pipeline on any available worker node
+
+    stages {
+        stage('Step 1: Code Checkout') {
+            steps {
+                echo "Fetching project source files..."
+                sh 'echo "Source code successfully cloned from repository."'
+            }
+        }
+
+        stage('Step 2: Compile & Build') {
+            steps {
+                echo "Compiling application binaries..."
+                // Creates a mock artifact directory and dummy application file
+                sh '''
+                    mkdir -p build_output
+                    echo "Application Title: Basic Jenkins Demo App" > build_output/build.info
+                    echo "Build Status: Compiled Successfully" >> build_output/build.info
+                    echo "Timestamp: $(date)" >> build_output/build.info
+                '''
+            }
+        }
+
+        stage('Step 3: Verification & Test') {
+            steps {
+                echo "Running smoke and unit tests..."
+                // Validates that the application build artifact exists
+                sh '''
+                    if [ -f build_output/build.info ]; then
+                        echo "Verification Test: Artifact check passed!"
+                    else
+                        echo "Verification Test: Missing compilation output!" && exit 1
+                    fi
+                '''
+            }
+        }
+
+        stage('Step 4: Archive Artifacts') {
+            steps {
+                echo "Archiving compilation output inside Jenkins..."
+                // Compresses the folder and saves it directly onto the Jenkins controller
+                sh 'tar -czvf app-distribution.tar.gz build_output/'
+                archiveArtifacts artifacts: 'app-distribution.tar.gz', fingerprint: true
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Wiping local build workspace to prevent disk bloat..."
+            cleanWs() // Automatically removes generated local files from the worker node
+        }
+        success {
+            echo "🎉 Pipeline execution completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed. Review the logs above to debug."
+        }
+    }
+}
 
