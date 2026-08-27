@@ -1,7 +1,8 @@
 pipeline {
-    agent none
+    agent none // Individual agents are handled inside each stage
+
     stages {    
-        stage ('Back-end') {
+        stage('Back-end') {
             agent { 
                 docker { image 'maven:latest' }
             }
@@ -9,12 +10,24 @@ pipeline {
                 sh 'mvn --version'
             }
         }
-        stage ('Front-end') {
+        
+        stage('Front-end') {
             agent { 
                 docker { image 'node:20-alpine' }
             }
             steps {
                 sh 'node --version'
+            }
+        }
+
+        stage('Database Tier') {
+            agent {
+                // Uses the official lightweight MySQL image
+                docker { image 'mysql:8.0' }
+            }
+            steps {
+                // Checks that the MySQL client software executes correctly inside the container
+                sh 'mysql --version'
             }
         }
     }
